@@ -3,6 +3,7 @@ package com.itheima.qqwidget18;
 import android.content.Context;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -15,7 +16,16 @@ import android.widget.FrameLayout;
 
 public class SlideMenu extends FrameLayout {
 
+    private static final String TAG = "SlideMenu";
+    private static final float MULTIPLE = 0.65f;
     private ViewDragHelper mViewDragHelper;
+    private View mMenuView;
+    private View mMainView;
+    private int mMainHeight;
+    private int mMainWidth;
+    private int mMaxRange;
+    private int mMenuHeight;
+    private int mMenuWidth;
 
     public SlideMenu(Context context) {
         this(context,null);
@@ -48,14 +58,68 @@ public class SlideMenu extends FrameLayout {
          * 参数1：因为ViewDragHelper是帮助ViewGroup拖拽子控件的，因此第一个参数就是这个ViewGroup
          */
         mViewDragHelper = ViewDragHelper.create(this, new ViewDragHelper.Callback() {
+            /**
+             *
+             * @param child 点击到的View，询问是否要捕获这个View
+             * @param pointerId 手指头的id 从0开始的
+             * @return
+             */
             @Override
             public boolean tryCaptureView(View child, int pointerId) {
-                return false;
+                return true;
             }
+
+            /**
+             * 用于确定被捕获的View水平方向移动的距离
+             * @param child
+             * @param left 要水平移动往右移动的距离，往右>0,往左<0
+             * @param dx 每次移动的偏移量
+             * @return
+             */
+            @Override
+            public int clampViewPositionHorizontal(View child, int left, int dx) {
+                //Log.d(TAG, "clampViewPositionHorizontal: left="+left+"/dx="+dx);
+                //if (left<0){
+                //    return 0;
+                //}else if (left>200){
+                //    return 200;
+                //}
+                //if (child==mMenuView){
+                //    return 0;
+                //}
+                return left;
+            }
+
+            //@Override
+            //public int clampViewPositionVertical(View child, int top, int dy) {
+            //    return top;
+            //}
 
             @Override
             public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
                 super.onViewPositionChanged(changedView, left, top, dx, dy);
+                Log.d(TAG, "onViewPositionChanged: changedView="+changedView+"/left="+left+"/dx="+dx);
+                if (changedView==mMainView){
+                    //限制mainView的范围[0,mMainWidth*0.85]
+                    if (left<0){
+                        mMainView.layout(0,0,mMainWidth,mMainHeight);
+                    }else if (left>mMaxRange){
+                        mMainView.layout(mMaxRange,0,mMaxRange+mMainWidth,mMainHeight);
+                    }
+
+                }else if (changedView==mMenuView){
+                    mMenuView.layout(0,0,mMenuWidth,mMenuHeight);
+                    //让MainView去移动
+                    //获取到menuView的右侧的偏移量加给MainView作为MainVIew的偏移量
+                    //获取MainView左侧到的偏移量
+                    int newLeft = mMainView.getLeft()+dx;
+                    if (newLeft<0){
+                        newLeft = 0;
+                    }else if (newLeft>mMaxRange){
+                        newLeft = mMaxRange;
+                    }
+                    mMainView.layout(newLeft,0,newLeft+mMainWidth,mMainHeight);
+                }
             }
 
             @Override
@@ -68,15 +132,7 @@ public class SlideMenu extends FrameLayout {
                 return super.getViewHorizontalDragRange(child);
             }
 
-            @Override
-            public int clampViewPositionHorizontal(View child, int left, int dx) {
-                return super.clampViewPositionHorizontal(child, left, dx);
-            }
 
-            @Override
-            public int clampViewPositionVertical(View child, int top, int dy) {
-                return super.clampViewPositionVertical(child, top, dy);
-            }
         });
     }
 
@@ -93,4 +149,17 @@ public class SlideMenu extends FrameLayout {
         // TODO: 2017/02/07
         return true;
     }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        mMenuView = getChildAt(0);
+        mMainView = getChildAt(1);
+        mMainWidth = mMainView.getMeasuredWidth();
+        mMainHeight = mMainView.getMeasuredHeight();
+        mMaxRange = (int) (mMainWidth * MULTIPLE);
+        mMenuWidth = mMenuView.getMeasuredWidth();
+        mMenuHeight = mMenuView.getMeasuredHeight();
+    }
+
 }
