@@ -1,7 +1,11 @@
 package com.itheima.qqwidget18;
 
+import android.animation.ArgbEvaluator;
 import android.animation.FloatEvaluator;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -28,6 +32,8 @@ public class SlideMenu extends FrameLayout {
     private int mMenuHeight;
     private int mMenuWidth;
     private FloatEvaluator mFloatEvaluator;
+    private ArgbEvaluator mArgbEvaluator;
+    private boolean isOpen;
 
     public SlideMenu(Context context) {
         this(context,null);
@@ -57,6 +63,7 @@ public class SlideMenu extends FrameLayout {
      67.         */
     private void init() {
         mFloatEvaluator = new FloatEvaluator();
+        mArgbEvaluator = new ArgbEvaluator();
         /**
          * 参数1：因为ViewDragHelper是帮助ViewGroup拖拽子控件的，因此第一个参数就是这个ViewGroup
          */
@@ -125,10 +132,13 @@ public class SlideMenu extends FrameLayout {
                 }
 
                 //添加伴随(MainView的移动)动画效果
-                if (changedView==mMainView){
+                //if (changedView==mMainView){
                     //计算打开的比例[0,1]
-                    float percent = (left+0f) / mMaxRange;
+                    float percent = (mMainView.getLeft()+0f) / mMaxRange;
                     executeAnimation(percent);
+                //}
+                if (mOnOpenStateChangedListener!=null){
+                    mOnOpenStateChangedListener.onOpening(percent);
                 }
             }
 
@@ -176,12 +186,19 @@ public class SlideMenu extends FrameLayout {
         final Float scaleMain = mFloatEvaluator.evaluate(percent, 1, 0.8);
         mMainView.setScaleX(scaleMain);
         mMainView.setScaleY(scaleMain);
-
-
+        final Float scaleMenu = mFloatEvaluator.evaluate(percent, 0.5f, 1);
+        mMenuView.setScaleX(scaleMenu);
+        mMenuView.setScaleY(scaleMenu);
+        mMenuView.setAlpha(scaleMenu);
+        final Float translateX = mFloatEvaluator.evaluate(percent, -mMenuWidth / 2, 0);
+        mMenuView.setTranslationX(translateX);
+        final Drawable background = getBackground();
+        final int colorEvaluate = (int) mArgbEvaluator.evaluate(percent, Color.BLACK, Color.TRANSPARENT);
+        background.setColorFilter(colorEvaluate, PorterDuff.Mode.SRC_OVER);
 
     }
 
-    private void close() {
+    public void close() {
         mViewDragHelper.smoothSlideViewTo(mMainView,0,0);
         //必须重绘当前View，上面代码才有用
         //invalidate();//只能在主线程中被调用
@@ -189,11 +206,21 @@ public class SlideMenu extends FrameLayout {
         postInvalidateOnAnimation();//针对动画效果作了优化
         //ViewCompat.postInvalidateOnAnimation(this);//向下兼容的重绘
 
+        if (mOnOpenStateChangedListener!=null){
+            mOnOpenStateChangedListener.onClose();
+        }
+
+        isOpen = false;
+
     }
 
-    private void open() {
+    public void open() {
         mViewDragHelper.smoothSlideViewTo(mMainView,mMaxRange,0);//开始执行动画.内部只是修改了ChildView的布局位置，并未真正的绘制出来
         postInvalidateOnAnimation();
+        if (mOnOpenStateChangedListener!=null){
+            mOnOpenStateChangedListener.onOpen();
+        }
+        isOpen = true;
     }
 
     /**
@@ -218,6 +245,14 @@ public class SlideMenu extends FrameLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+
+        if(isOpen){
+            final float x = ev.getX();
+            if (x>mMaxRange){
+                return true;
+            }
+        }
+
         //让ViewDragHelper智能判断是否需要拦截事件
         return mViewDragHelper.shouldInterceptTouchEvent(ev);
     }
@@ -234,4 +269,14 @@ public class SlideMenu extends FrameLayout {
         mMenuHeight = mMenuView.getMeasuredHeight();
     }
 
+    public interface OnOpenStateChangedListener{
+        void onOpen();
+        void onClose();
+        void onOpening(float percent);
+    }
+    private OnOpenStateChangedListener mOnOpenStateChangedListener;
+
+    public void setOnOpenStateChangedListener(OnOpenStateChangedListener onOpenStateChangedListener) {
+        mOnOpenStateChangedListener = onOpenStateChangedListener;
+    }
 }
