@@ -130,7 +130,6 @@ public class SlideMenu extends FrameLayout {
                     float percent = (left+0f) / mMaxRange;
                     executeAnimation(percent);
                 }
-
             }
 
             @Override
@@ -167,8 +166,8 @@ public class SlideMenu extends FrameLayout {
     //添加伴随(MainView的移动)动画效果
     private void executeAnimation(float percent) {
         /**
-         * 1. mainView X ,Y 缩放 [1,0.8] scale =0.9
-         * 2. menuView X,Y 缩放 [0.58,1]
+         * 1. mainView X ,Y 缩放 [1,0.8] scale
+         * 2. menuView X,Y 缩放 [0.5,1]
          * 3. menuView透明度 [0.5,1]
          * 4. 背景颜色 从黑色到透明
          * 5. menuView 平移 [-menuWidth/2,0]
@@ -177,6 +176,8 @@ public class SlideMenu extends FrameLayout {
         final Float scaleMain = mFloatEvaluator.evaluate(percent, 1, 0.8);
         mMainView.setScaleX(scaleMain);
         mMainView.setScaleY(scaleMain);
+
+
 
     }
 
