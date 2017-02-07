@@ -1,5 +1,6 @@
 package com.itheima.qqwidget18;
 
+import android.animation.FloatEvaluator;
 import android.content.Context;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
@@ -26,6 +27,7 @@ public class SlideMenu extends FrameLayout {
     private int mMaxRange;
     private int mMenuHeight;
     private int mMenuWidth;
+    private FloatEvaluator mFloatEvaluator;
 
     public SlideMenu(Context context) {
         this(context,null);
@@ -54,6 +56,7 @@ public class SlideMenu extends FrameLayout {
      66.         * 它只是一个触摸事件的解析类(如GestureDecetor)，所以需要我们传递给它触摸事件，它才能工作;
      67.         */
     private void init() {
+        mFloatEvaluator = new FloatEvaluator();
         /**
          * 参数1：因为ViewDragHelper是帮助ViewGroup拖拽子控件的，因此第一个参数就是这个ViewGroup
          */
@@ -120,22 +123,90 @@ public class SlideMenu extends FrameLayout {
                     }
                     mMainView.layout(newLeft,0,newLeft+mMainWidth,mMainHeight);
                 }
+
+                //添加伴随(MainView的移动)动画效果
+                if (changedView==mMainView){
+                    //计算打开的比例[0,1]
+                    float percent = (left+0f) / mMaxRange;
+                    executeAnimation(percent);
+                }
+
             }
 
             @Override
             public void onViewReleased(View releasedChild, float xvel, float yvel) {
                 super.onViewReleased(releasedChild, xvel, yvel);
+                Log.d(TAG, "onViewReleased: xVel="+xvel);
+                if (xvel>1000){
+                    //打开
+                    open();
+                }else  if (xvel<-1000){
+                    //关闭
+                    close();
+                }else{
+                    //根据距离进行判断
+                    if (mMainView.getLeft()>mMaxRange/2){
+                        open();
+                    }else{
+                        close();
+                    }
+                }
             }
 
+            /**
+             *
+             * @param child
+             * @return 如果返回大于0的数字，代表当子控件消费触摸事件事件，水平方向拦截
+             */
             @Override
             public int getViewHorizontalDragRange(View child) {
-                return super.getViewHorizontalDragRange(child);
+                return mMaxRange;
             }
-
-
         });
     }
+    //添加伴随(MainView的移动)动画效果
+    private void executeAnimation(float percent) {
+        /**
+         * 1. mainView X ,Y 缩放 [1,0.8] scale =0.9
+         * 2. menuView X,Y 缩放 [0.58,1]
+         * 3. menuView透明度 [0.5,1]
+         * 4. 背景颜色 从黑色到透明
+         * 5. menuView 平移 [-menuWidth/2,0]
+         */
+        //根据percent 计算出MainView应该缩放的比例scale,然后把这个scale设置给MainView
+        final Float scaleMain = mFloatEvaluator.evaluate(percent, 1, 0.8);
+        mMainView.setScaleX(scaleMain);
+        mMainView.setScaleY(scaleMain);
 
+    }
+
+    private void close() {
+        mViewDragHelper.smoothSlideViewTo(mMainView,0,0);
+        //必须重绘当前View，上面代码才有用
+        //invalidate();//只能在主线程中被调用
+        //postInvalidate();//可以在任何线程中调用
+        postInvalidateOnAnimation();//针对动画效果作了优化
+        //ViewCompat.postInvalidateOnAnimation(this);//向下兼容的重绘
+
+    }
+
+    private void open() {
+        mViewDragHelper.smoothSlideViewTo(mMainView,mMaxRange,0);//开始执行动画.内部只是修改了ChildView的布局位置，并未真正的绘制出来
+        postInvalidateOnAnimation();
+    }
+
+    /**
+     * 当View在重绘的时候，View会调用这个方法，用于判断动画是否执行完成
+     */
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+        //如果动画没有执行完，不断的重绘
+        if (mViewDragHelper.continueSettling(true)){
+            //如果动画时间还未执行完，继续重绘
+            postInvalidateOnAnimation();
+        }
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -146,8 +217,8 @@ public class SlideMenu extends FrameLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        // TODO: 2017/02/07
-        return true;
+        //让ViewDragHelper智能判断是否需要拦截事件
+        return mViewDragHelper.shouldInterceptTouchEvent(ev);
     }
 
     @Override
