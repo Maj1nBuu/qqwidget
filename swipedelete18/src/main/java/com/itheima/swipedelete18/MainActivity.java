@@ -1,7 +1,7 @@
 package com.itheima.swipedelete18;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -22,7 +22,6 @@ public class MainActivity extends AppCompatActivity implements MainAdapter.OnOpt
 
         //通过Arrays工具类转换过来的集合不支持删除，只能查询
         mNames = new ArrayList<>(Arrays.asList(Cheeses.NAMES));
-
         mMainAdapter = new MainAdapter(mNames);
         mListView.setAdapter(mMainAdapter);
         mMainAdapter.setOnOptionsClickListener(this);
