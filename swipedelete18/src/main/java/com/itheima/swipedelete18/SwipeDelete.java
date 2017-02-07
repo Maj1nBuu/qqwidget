@@ -58,7 +58,6 @@ public class SwipeDelete extends ViewGroup {
                     }else if (left<-mRightWidth){//往左滑动到正好能将右侧视图显示出来为止
                         return -mRightWidth;
                     }
-
                 }else if (child==mRightView){
                     if (left<mLeftWidth - mRightWidth){
                         return mLeftWidth - mRightWidth;
@@ -72,11 +71,25 @@ public class SwipeDelete extends ViewGroup {
             @Override
             public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
                 super.onViewPositionChanged(changedView, left, top, dx, dy);
+                if (changedView==mLeftView){
+                    //当左侧的控件滑动的时候，需要让右侧的跟着滑动
+                    //将左侧的dx累加到右侧的左边距，然后布局右侧控件
+                    int newLeft = mRightView.getLeft()+dx;
+                    mRightView.layout(newLeft,0,newLeft+mRightWidth,mRightHeight);
+                }else if (changedView==mRightView){
+                    int newLeft = mLeftView.getLeft() +dx;
+                    mLeftView.layout(newLeft,0,newLeft+mRightWidth,mLeftHeight);
+                }
             }
 
             @Override
             public void onViewReleased(View releasedChild, float xvel, float yvel) {
                 super.onViewReleased(releasedChild, xvel, yvel);
+                if (mLeftView.getLeft()<-mRightWidth/2){
+                    open();
+                }else{
+                    close();
+                }
             }
 
             @Override
@@ -86,6 +99,24 @@ public class SwipeDelete extends ViewGroup {
 
 
         });
+    }
+
+    private void close() {
+        mViewDragHelper.smoothSlideViewTo(mLeftView,0,0);
+        postInvalidateOnAnimation();
+    }
+
+    private void open() {
+        mViewDragHelper.smoothSlideViewTo(mLeftView,-mRightWidth,0);
+        postInvalidateOnAnimation();
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+        if (mViewDragHelper.continueSettling(true)){
+                postInvalidateOnAnimation();
+        }
     }
 
     @Override
