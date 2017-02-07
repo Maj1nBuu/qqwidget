@@ -78,7 +78,7 @@ public class SwipeDelete extends ViewGroup {
                     mRightView.layout(newLeft,0,newLeft+mRightWidth,mRightHeight);
                 }else if (changedView==mRightView){
                     int newLeft = mLeftView.getLeft() +dx;
-                    mLeftView.layout(newLeft,0,newLeft+mRightWidth,mLeftHeight);
+                    mLeftView.layout(newLeft,0,newLeft+mLeftWidth,mLeftHeight);
                 }
             }
 
@@ -91,24 +91,25 @@ public class SwipeDelete extends ViewGroup {
                     close();
                 }
             }
-
             @Override
             public int getViewHorizontalDragRange(View child) {
                 return super.getViewHorizontalDragRange(child);
             }
-
-
         });
     }
 
     private void close() {
         mViewDragHelper.smoothSlideViewTo(mLeftView,0,0);
         postInvalidateOnAnimation();
+        //当关闭的时候，将当前对象从SwipeDeleteManger上移除
+        SwipeDeleteManager.getInstance().setSwipeDelete(null);
     }
 
     private void open() {
         mViewDragHelper.smoothSlideViewTo(mLeftView,-mRightWidth,0);
         postInvalidateOnAnimation();
+        //将当前对象传递给SwipeDeleteManager记录下
+        SwipeDeleteManager.getInstance().setSwipeDelete(this);
     }
 
     @Override
@@ -127,6 +128,12 @@ public class SwipeDelete extends ViewGroup {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        //在该方法中判断当前有没有打开的条目，如果有先关闭掉
+        final SwipeDelete swipeDelete = SwipeDeleteManager.getInstance().getSwipeDelete();
+        if (swipeDelete!=null&&swipeDelete!=this){
+                swipeDelete.close();
+            return true;
+        }
         return mViewDragHelper.shouldInterceptTouchEvent(ev);
     }
 
@@ -151,4 +158,26 @@ public class SwipeDelete extends ViewGroup {
         mLeftView.layout(0,0,mLeftWidth,mLeftHeight);
         mRightView.layout(mLeftWidth,0,mLeftWidth+mRightWidth,mRightHeight);
     }
+    public static class SwipeDeleteManager{
+        private SwipeDeleteManager(){};
+        private SwipeDelete mSwipeDelete;
+        private static SwipeDeleteManager sSwipeDeleteManager;
+        public static SwipeDeleteManager getInstance(){
+            synchronized (SwipeDeleteManager.class){
+                if (sSwipeDeleteManager==null){
+                    sSwipeDeleteManager = new SwipeDeleteManager();
+                }
+            }
+            return sSwipeDeleteManager;
+        }
+
+        public SwipeDelete getSwipeDelete() {
+            return mSwipeDelete;
+        }
+
+        public void setSwipeDelete(SwipeDelete swipeDelete) {
+            mSwipeDelete = swipeDelete;
+        }
+    }
+
 }
