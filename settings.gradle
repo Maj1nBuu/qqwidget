@@ -1,1 +1,1 @@
-include ':app', ':swipedelete18', ':parallaxlistview'
+include ':app', ':swipedelete18', ':parallaxlistview', ':stickview18'
