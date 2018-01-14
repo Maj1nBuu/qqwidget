@@ -5,10 +5,10 @@
     android:layout_height="match_parent">
 
 
-    <com.itheima.parallaxlistview.ParallaxListView
+    <com.ymnet.parallaxlistview.ParallaxListView
         android:id="@+id/listView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></com.itheima.parallaxlistview.ParallaxListView>
+        android:layout_height="match_parent"/>
 
 
 </RelativeLayout>

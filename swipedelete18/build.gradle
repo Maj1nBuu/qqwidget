@@ -5,7 +5,7 @@ android {
     buildToolsVersion "25.0.0"
 
     defaultConfig {
-        applicationId "com.itheima.swipedelete18"
+        applicationId "com.example.swipedelete18"
         minSdkVersion 16
         targetSdkVersion 25
         versionCode 1

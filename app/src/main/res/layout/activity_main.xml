@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.itheima.qqwidget18.SlideMenu
+<com.ymnet.qqwidget.SlideMenu
     android:background="@mipmap/bg"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/slideMenu"
@@ -10,4 +10,4 @@
 
     <include layout="@layout/main_layout"></include>
 
-</com.itheima.qqwidget18.SlideMenu>
+</com.ymnet.qqwidget.SlideMenu>

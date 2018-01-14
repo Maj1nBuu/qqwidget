@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.itheima.stickview18.StickView
+    <com.ymnet.stickview18.StickView
         android:id="@+id/stickView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

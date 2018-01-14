@@ -5,7 +5,7 @@ android {
     buildToolsVersion "25.0.0"
 
     defaultConfig {
-        applicationId "com.itheima.stickview18"
+        applicationId "com.example.stickview18"
         minSdkVersion 16
         targetSdkVersion 25
         versionCode 1
